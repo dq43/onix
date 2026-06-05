@@ -1,6 +1,6 @@
 #Serverless worker for Onix model v1 
 
-FROM runpod/pytorch:2.5.1-py3.11-cuda12.4.1-devel-ubuntu22.04
+FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
 
 WORKDIR /
 
@@ -15,6 +15,6 @@ RUN pip install --no-cache-dir \
 
 COPY handler.py /handler.py
 
-CMD ["python3", "-u" "/handler.py"]
+CMD ["python3", "-u", "/handler.py"]
 
 
