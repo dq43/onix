@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OnixCore</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #000;
+            color: #ffffff;
+        }
+
+        #chat-box {
+            background: #000;
+            border: 1px solid #000;
+            border-radius: 10px;
+            padding: 20px;
+            height: 350px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .user-msg {
+            background: #6ac5fe;
+            color: #000;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            text-align: right;
+        }
+
+        .bot-msg {
+            background: #111fff;
+            color: #000;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            text-align : left;
+        }
+
+        #input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        #user-input {
+            flex: 1;
+            padding:10px;
+            border-radius: 8px;
+            border: 1px solid #fff;
+            background: #000;
+            color: #bebebe;
+            font-size: 16px;
+        }
+
+        #send-btn {
+            padding: 10px 20px;
+            background: #000;
+            color: #888;
+            border: 1px solid fff;
+            border-radius: 11px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #status {
+            text-align: center;
+            color: #888;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        #errortxt {
+            text-align: center;
+            color: #ff2c2c;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+    </style>
+<body>
+    <div id="chat-box"></div>
+    <div id ="input-area">
+        <input type="text" id="user-input" placeholder="Enter a message here." />
+        <button id="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+    <div id="status"> </div>
+    <div id="errortxt"> </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById("user-input");
+            const chatBox = document.getElementById("chat-box");
+            const status = document.getElementById("status");
+            const errortxt = document.getElementById("errortxt");
+            const userText = input.value.trim();
+
+            if (!userText) return;
+
+            chatBox.innerHTML += `<div class="user-msg">${userText}</div>`;
+            input.value = "";
+            status.textContent = "Processing...";
+
+            try {
+                const response = await fetch("http://localhost:8000/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt: userText })
+                });
+
+                const data = await response.json();
+
+                chatBox.innerHTML += `<div class="bot-msg">${data.response}</div>`;
+                status.textContent = "";
+            } catch (error) {
+                status.textContent = ""
+                errortxt.textContent = "Error: Could not reach server." ;
+            }
+
+            chatBox.scrollTop = chatBox.scrollHeight;        
+        }
+
+        document.getElementById("user-input").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") sendMessage();
+        });
+    
+    </script>
+</body>
+</html>
