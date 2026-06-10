@@ -63,6 +63,18 @@ def build_inputs(messages):
     )
     return processor(text=[text], return_tensors="pt").to(model.device)
 
+def stream_generate(gen_kwargs):
+    streamer = TextIteratorStreamer(
+        processor.tokenizer,skip_prompt=True,skip_special_tokens=True,
+    )
+    gen_kwargs["streamer"] = streamer
+    thread = Thread(target=model.generate, kwargs=gen_kwargs)
+    thread.start()
+    for token in streamer:
+        if token:
+            yield {"token": token}
+    thread.join()
+
 
 def handler(job):
     """
@@ -94,21 +106,7 @@ def handler(job):
     )
 
     if stream:
-        # Streaming path — yield tokens as they're produced
-        streamer = TextIteratorStreamer(
-            processor.tokenizer,
-            skip_prompt=True,
-            skip_special_tokens=True,
-        )
-        gen_kwargs["streamer"] = streamer
-
-        thread = Thread(target=model.generate, kwargs=gen_kwargs)
-        thread.start()
-
-        for token in streamer:
-            if token:
-                yield {"token": token}
-        thread.join()
+        return stream_generate(gen_kwargs)
     else:
         # Non-streaming path — return full text
         with torch.no_grad():
