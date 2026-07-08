@@ -77,11 +77,6 @@ def stream_generate(gen_kwargs):
 
 
 def handler(job):
-    """
-    RunPod serverless entrypoint.
-    Yields tokens as they generate (streaming) when stream=True,
-    otherwise returns the full response.
-    """
     job_input = job["input"]
     messages = job_input.get("messages", [])
     max_new_tokens = job_input.get("max_new_tokens", 512)
@@ -90,8 +85,9 @@ def handler(job):
     stream = job_input.get("stream", True)
 
     if not messages:
-        return {"error": "No messages provided"}
-
+        yield {"error": "No messages provided"}
+        return
+    
     inputs = build_inputs(messages)
 
     gen_kwargs = dict(
@@ -106,7 +102,7 @@ def handler(job):
     )
 
     if stream:
-        return stream_generate(gen_kwargs)
+        yield from stream_generate(gen_kwargs)
     else:
         # Non-streaming path — return full text
         with torch.no_grad():
@@ -115,7 +111,7 @@ def handler(job):
             output[0][inputs.input_ids.shape[1]:],
             skip_special_tokens=True,
         )
-        return {"response": response}
+        yield {"response": response}
 
 
 # Start the serverless worker.
